@@ -1,7 +1,46 @@
 package main
 
-import "fmt"
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/mux"
+	_ "github.com/joho/godotenv/autoload"
+	_ "github.com/lib/pq"
+	"github.com/madeindra/golang-starter/internal/config"
+)
 
 func main() {
-	fmt.Print("Hello World!")
+	// initialize configurations
+	cfg := config.Init()
+
+	// initialize database
+	db, err := sql.Open("postgres", cfg.Database.DSN)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := db.Ping(); err != nil {
+		log.Fatal(err)
+	}
+
+	db.SetMaxIdleConns(cfg.Database.MaxIdleConnections)
+	db.SetMaxOpenConns(cfg.Database.MaxOpenConnections)
+
+	// initialize dependencies
+	router := mux.NewRouter()
+
+	// TODO: create repositories & usecases
+
+	// initialize server
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%s", cfg.App.Port),
+		Handler: router,
+	}
+
+	// run server
+	server.ListenAndServe()
 }
